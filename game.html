@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>債衝刺 Bond Dash</title>
+<style>
+:root{
+  --navy:#0b2545; --navy2:#13315c; --gold:#e9b949; --gold2:#f6d77a;
+  --ink:#0d1b2a; --bg:#f4f1e8; --card:#ffffff; --muted:#6b7280;
+  --ok:#16a34a; --bad:#dc2626;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--navy);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;color:var(--ink);overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none}
+#app{position:relative;width:100%;height:100%;max-width:520px;margin:0 auto;background:var(--bg);overflow:hidden}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;overflow-y:auto}
+.screen.on{display:flex}
+.hero{background:linear-gradient(160deg,var(--navy),var(--navy2));color:#fff;padding:22px 18px 18px;text-align:center}
+.hero h1{margin:0;font-size:28px;letter-spacing:2px}
+.hero h1 span{color:var(--gold)}
+.hero p{margin:6px 0 0;opacity:.85;font-size:13px}
+.pad{padding:16px}
+.card{background:var(--card);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+label{font-size:13px;color:var(--muted);display:block;margin-bottom:6px}
+input[type=text]{width:100%;font-size:18px;padding:10px 12px;border:2px solid #d8d2c0;border-radius:10px;outline:none;font-family:inherit}
+input[type=text]:focus{border-color:var(--gold)}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:14px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:10px}
+.btn.gold{background:var(--gold);color:var(--navy)}
+.btn.navy{background:var(--navy);color:#fff}
+.btn.ghost{background:transparent;border:2px solid var(--navy);color:var(--navy)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:8px}
+.row>*{flex:1}
+.err{color:var(--bad);font-size:13px;min-height:18px;margin-top:6px}
+.small{font-size:12px;color:var(--muted)}
+.demo{background:#fff3cd;color:#7a5b00;font-size:12px;text-align:center;padding:6px}
+.code{font-size:34px;font-weight:800;letter-spacing:6px;color:var(--navy);text-align:center}
+.shoes{display:flex;flex-direction:column;gap:8px}
+.shoe{border:2px solid #e3dccb;border-radius:12px;padding:10px 12px;cursor:pointer;display:flex;gap:10px;align-items:center;background:#fff}
+.shoe.sel{border-color:var(--gold);background:#fff9e6}
+.shoe .ic{font-size:26px}
+.shoe b{display:block;font-size:15px}
+.shoe small{color:var(--muted);font-size:12px;line-height:1.35;display:block}
+.plist{list-style:none;margin:0;padding:0}
+.plist li{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eee;font-size:15px}
+.dot{width:14px;height:14px;border-radius:50%;flex:none}
+.tag{font-size:11px;background:var(--navy);color:#fff;border-radius:6px;padding:1px 6px}
+.tag.g{background:var(--gold);color:var(--navy)}
+.tag.bot{background:#94a3b8}
+.x{margin-left:auto;border:0;background:none;color:var(--muted);font-size:18px;cursor:pointer}
+/* race */
+#race{background:#3b7d3a}
+#cv{position:absolute;inset:0;width:100%;height:100%;display:block}
+#hud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;padding:8px 10px;color:#fff;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.6);pointer-events:none;font-size:15px}
+#tapzone{position:absolute;left:0;right:0;bottom:0;height:25%;display:flex;align-items:center;justify-content:center;pointer-events:auto}
+#tapbtn{width:78%;height:72%;border-radius:22px;background:rgba(233,185,73,.85);color:var(--navy);font-size:30px;font-weight:900;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:0 6px 0 #b8892a;letter-spacing:4px}
+#tapbtn small{font-size:12px;letter-spacing:0;font-weight:600;opacity:.8}
+#tapbtn.hit{transform:translateY(4px);box-shadow:0 2px 0 #b8892a}
+#banner{position:absolute;left:50%;top:16%;transform:translateX(-50%);background:rgba(11,37,69,.92);color:#fff;padding:10px 16px;border-radius:12px;font-weight:800;font-size:18px;text-align:center;display:none;white-space:nowrap;pointer-events:none}
+#banner small{display:block;font-size:12px;font-weight:500;opacity:.85}
+#count{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:120px;font-weight:900;color:var(--gold);text-shadow:0 4px 0 var(--navy);pointer-events:none}
+#quiz{position:absolute;inset:0;background:rgba(11,37,69,.86);display:none;align-items:center;justify-content:center;padding:16px}
+#quiz .qc{background:#fff;border-radius:16px;padding:16px;width:100%}
+#quiz .qh{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+#quiz .qt{font-size:18px;font-weight:800;margin-bottom:10px;line-height:1.4}
+#quiz .opt{display:block;width:100%;text-align:left;border:2px solid #e3dccb;background:#fff;border-radius:10px;padding:11px 12px;font-size:16px;margin-top:8px;font-family:inherit;cursor:pointer;color:var(--ink)}
+#quiz .opt.ok{border-color:var(--ok);background:#dcfce7}
+#quiz .opt.no{border-color:var(--bad);background:#fee2e2}
+#qbar{height:6px;background:#eee;border-radius:3px;overflow:hidden;margin-bottom:8px}
+#qbar i{display:block;height:100%;background:var(--gold);width:100%}
+#qexp{font-size:13px;color:var(--muted);margin-top:8px;min-height:18px}
+.res li{font-size:16px}
+.res .rk{width:26px;font-weight:800;color:var(--navy)}
+.res .tm{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700}
+.lb{width:100%;border-collapse:collapse;font-size:14px}
+.lb td{padding:6px 4px;border-bottom:1px solid #eee}
+.lb td:last-child{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.lb tr.me td{background:#fff9e6}
+.tabs{display:flex;gap:6px;margin-bottom:8px}
+.tabs button{flex:1;border:0;border-radius:8px;padding:7px;font-family:inherit;background:#eee;cursor:pointer;font-size:13px}
+.tabs button.on{background:var(--navy);color:#fff}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- 首頁 -->
+<div class="screen on" id="s-home">
+  <div id="demoNote" class="demo" style="display:none">本機示範模式（尚未設定 Supabase）：用同一台電腦開多個分頁就能測試多人</div>
+  <div class="hero"><h1>債<span>衝刺</span> Bond Dash</h1><p>狂點衝刺 × Fed 升降息 × 配息補給站</p></div>
+  <div class="pad">
+    <div class="card">
+      <label>你的名字（會上排行榜）</label>
+      <input type="text" id="name" maxlength="10" placeholder="例如：西湖小明">
+    </div>
+    <div class="card">
+      <button class="btn gold" id="bCreate">開一個新房間</button>
+      <div style="text-align:center;margin:12px 0 4px" class="small">— 或輸入朋友給的房號 —</div>
+      <div class="row">
+        <input type="text" id="code" maxlength="4" placeholder="房號" style="text-transform:uppercase;text-align:center;letter-spacing:4px">
+        <button class="btn navy" id="bJoin" style="margin-top:0">加入</button>
+      </div>
+      <div class="err" id="homeErr"></div>
+    </div>
+    <button class="btn ghost" id="bBoard">🏆 看全站排行榜</button>
+    <div class="card small" style="margin-top:12px;line-height:1.6">
+      <b style="color:var(--ink)">玩法</b><br>
+      ① 開跑前選一雙「債券跑鞋」，每雙對升降息的反應不同<br>
+      ② 狂點黃色按鈕往前衝（電腦可按空白鍵）<br>
+      ③ 途中遇到 3 個「配息補給站」要答題：答對加速、答錯跌倒<br>
+      ④ 比賽中 Fed 會突然升息（逆風）或降息（順風）<br>
+      ⑤ 最先衝過「到期還本」終點線的人獲勝！
+    </div>
+  </div>
+</div>
+
+<!-- 大廳 -->
+<div class="screen" id="s-lobby">
+  <div class="hero" style="padding:14px">
+    <div class="small" style="color:#cbd5e1">房號（請告訴朋友）</div>
+    <div class="code" id="lCode" style="color:var(--gold)">----</div>
+  </div>
+  <div class="pad">
+    <div class="card">
+      <label>選你的債券跑鞋</label>
+      <div class="shoes" id="shoes"></div>
+    </div>
+    <div class="card">
+      <label>跑者 <span id="pCount"></span></label>
+      <ul class="plist" id="plist"></ul>
+      <div id="hostCtl" style="display:none">
+        <button class="btn ghost" id="bBot" style="padding:9px;font-size:14px">＋ 加一位電腦跑者</button>
+        <button class="btn gold" id="bStart">🏁 開跑！</button>
+      </div>
+      <div id="waitMsg" class="small" style="text-align:center;margin-top:10px"></div>
+    </div>
+    <button class="btn ghost" id="bLeave">離開房間</button>
+  </div>
+</div>
+
+<!-- 比賽 -->
+<div class="screen" id="race">
+  <canvas id="cv"></canvas>
+  <div id="hud"><span id="hTime">0.0 秒</span><span id="hDist">0 / 300 m</span></div>
+  <div id="banner"></div>
+  <div id="count"></div>
+  <div id="tapzone"><div id="tapbtn">衝！<small>狂點這裡</small></div></div>
+  <div id="quiz"><div class="qc">
+    <div class="qh"><span id="qNo">配息補給站</span><span id="qSec"></span></div>
+    <div id="qbar"><i></i></div>
+    <div class="qt" id="qText"></div>
+    <div id="qOpts"></div>
+    <div id="qexp"></div>
+  </div></div>
+</div>
+
+<!-- 結果 -->
+<div class="screen" id="s-result">
+  <div class="hero"><h1>🏁 本場結果</h1><p id="rSub"></p></div>
+  <div class="pad">
+    <div class="card"><ul class="plist res" id="rList"></ul></div>
+    <div class="card">
+      <label>🏆 全站排行榜（所有房間）</label>
+      <div id="rBoard"></div>
+    </div>
+    <div id="rHost" style="display:none"><button class="btn gold" id="bAgain">再跑一場（回大廳）</button></div>
+    <div id="rWait" class="small" style="text-align:center">等房主開下一場…</div>
+    <button class="btn ghost" id="bLeave2">離開房間</button>
+  </div>
+</div>
+
+<!-- 排行榜 -->
+<div class="screen" id="s-board">
+  <div class="hero"><h1>🏆 全站排行榜</h1><p>所有房間一起排，每人只列最佳成績</p></div>
+  <div class="pad">
+    <div class="card"><div id="bBoardBody"></div></div>
+    <button class="btn navy" id="bBack">回首頁</button>
+  </div>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* =========================================================
+   ★ 設定區：要改題目、跑鞋、賽道長度，只要改這裡 ★
+   ========================================================= */
+const CONFIG = (window.BOND_DASH_CONFIG || {});   // 由 app.py 注入 Supabase 金鑰
+const RACE_M = 300;                 // 賽道長度（公尺）
+const STATIONS = [75, 150, 225];    // 配息補給站位置（公尺）
+const MAX_PLAYERS = 8;              // 每房上限
+const Q_SECONDS = 10;               // 每題作答秒數
+const TIME_LIMIT = 150;             // 每場最長秒數，超過算未完賽
+
+const SHOES = {
+  short: {icon:'🛡️', name:'短天期債（2 年期公債）', desc:'穩穩跑。升息只慢一點點，降息也只快一點點。', max:9.4, sens:0.12},
+  long:  {icon:'🚀', name:'長天期債（20 年期公債）', desc:'存續期間長，對利率超敏感：升息會被逆風吹到慢很多，降息會順風起飛。', max:9.4, sens:0.5},
+  hy:    {icon:'🔥', name:'高收益債（BB 級公司債）', desc:'最高速度最快，但每個補給站有 25% 機率「信用抽筋」停 1.5 秒。', max:10.0, sens:0.25, cramp:0.25},
+};
+
+// 題庫：q 題目、a 選項（第一個是正確答案，畫面上會自動打亂）、e 解說
+const QUESTIONS = [
+  {q:'市場利率上升時，已發行債券的價格通常會？', a:['下跌','上漲','不受影響'], e:'利率和債券價格反向變動。'},
+  {q:'存續期間（Duration）越長的債券，對利率變動？', a:['越敏感','越不敏感','完全無關'], e:'存續期間越長，利率變動造成的價格波動越大。'},
+  {q:'S&P 評等中，投資等級的最低一級是？', a:['BBB-','BB+','A-','B'], e:'BBB- 以上是投資等級，BB+ 以下是非投資等級。'},
+  {q:'面額 10 萬美元、票面利率 5% 的年配債，每年配息多少？', a:['5,000 美元','500 美元','50,000 美元'], e:'10 萬 × 5% = 5,000 美元。'},
+  {q:'半年配息的債券，一年配幾次息？', a:['2 次','1 次','4 次','12 次'], e:'半年配＝每 6 個月配一次，一年 2 次。'},
+  {q:'可贖回債（Callable Bond）的提前贖回權在誰手上？', a:['發行機構','投資人','銀行理專'], e:'贖回權在發行人手上，通常在利率走低時行使。'},
+  {q:'「高收益債」通常指的是？', a:['非投資等級債','政府公債','零息債'], e:'高收益債＝評等 BB+ 以下的非投資等級債，票息較高、信用風險也較高。'},
+  {q:'Fed 降息時，下列哪一種債券價格通常漲最多？', a:['長天期債','短天期債','浮動利率債'], e:'存續期間越長，降息帶來的價格漲幅越大。'},
+  {q:'公司債的信用利差擴大，通常代表價格？', a:['下跌','上漲','不變'], e:'利差擴大代表殖利率上升，價格下跌。'},
+  {q:'債券報價 102，代表目前是？', a:['溢價','折價','平價'], e:'高於面額 100 是溢價，低於 100 是折價。'},
+  {q:'發行人違約時，哪一種債券優先受償？', a:['優先順位債','次順位債','永續債'], e:'清償順序：優先順位 > 次順位。'},
+  {q:'零息債券的存續期間大約等於？', a:['剩餘到期年限','0 年','1 年'], e:'零息債期間沒有配息，存續期間就等於到期年限。'},
+  {q:'殖利率（YTM）是假設什麼情況下算出的年化報酬率？', a:['持有到期且發行人按時付息還本','隔天就賣掉','發行人違約'], e:'YTM 假設持有到到期，並且按時收到配息和本金。'},
+  {q:'買在 95 元（折價）並持有到期拿回 100 元，差額 5 元是？', a:['資本利得','配息','手續費'], e:'到期按面額還本，買入價和面額的差就是資本利得。'},
+  {q:'下列哪一個是評等機構？', a:['Moody\'s','Bloomberg','Nasdaq'], e:'三大評等機構：S&P、Moody\'s、Fitch。'},
+];
+
+/* ========================================================= */
+const $ = s => document.querySelector(s);
+const COLORS = ['#e9b949','#ef4444','#3b82f6','#22c55e','#a855f7','#f97316','#06b6d4','#ec4899'];
+const BOT_NAMES = ['電腦·小債','電腦·殖利率','電腦·存續','電腦·票息','電腦·利差','電腦·評等','電腦·到期'];
+const DEMO = !(CONFIG.url && CONFIG.key);
+const sb = DEMO ? null : window.supabase.createClient(CONFIG.url, CONFIG.key);
+const uid = () => Math.random().toString(36).slice(2,10);
+const fmt = ms => (ms/1000).toFixed(2)+' 秒';
+const esc = s => String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function rng(seed){ let s=seed>>>0||1; return ()=>{ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; }; }
+function show(id){ document.querySelectorAll('.screen').forEach(e=>e.classList.toggle('on', e.id===id)); }
+
+if (DEMO) $('#demoNote').style.display='block';
+try{ $('#name').value = localStorage.getItem('bd_name')||''; }catch(e){}
+if (CONFIG.room) $('#code').value = String(CONFIG.room).toUpperCase().slice(0,4);
+
+/* ---------------- 網路層（Supabase Realtime / 本機示範） ---------------- */
+function createNet(room, onMsg, onPresence){
+  if (!DEMO){
+    const ch = sb.channel('bond-dash-'+room, {config:{broadcast:{self:false}, presence:{key:me.id}}});
+    let ready=false, pending=null;
+    ch.on('broadcast',{event:'m'},({payload})=>onMsg(payload));
+    ch.on('presence',{event:'sync'},()=>{
+      const st = ch.presenceState();
+      onPresence(Object.values(st).map(a=>a[a.length-1]));
+    });
+    ch.subscribe(status=>{
+      if (status==='SUBSCRIBED'){ ready=true; if(pending) ch.track(pending); }
+    });
+    return {
+      send(m){ if(ready) ch.send({type:'broadcast', event:'m', payload:m}); },
+      track(s){ pending=s; if(ready) ch.track(s); },
+      leave(){ try{ ch.untrack(); sb.removeChannel(ch);}catch(e){} }
+    };
+  }
+  // 本機示範：BroadcastChannel，同一台電腦多個分頁互通
+  const bc = new BroadcastChannel('bond-dash-'+room);
+  const peers = {}; let mine=null;
+  const emit = ()=>{
+    const now=Date.now();
+    for (const k in peers) if (now-peers[k].t>4000) delete peers[k];
+    const list = Object.values(peers).map(p=>p.s); if (mine) list.push(mine);
+    onPresence(list);
+  };
+  bc.onmessage = ev=>{
+    const d=ev.data;
+    if (d.k==='hb'){ peers[d.s.id]={s:d.s,t:Date.now()}; emit(); }
+    else if (d.k==='bye'){ delete peers[d.id]; emit(); }
+    else if (d.k==='m') onMsg(d.m);
+  };
+  const hb = setInterval(()=>{ if(mine) bc.postMessage({k:'hb',s:mine}); emit(); }, 1000);
+  return {
+    send(m){ bc.postMessage({k:'m',m}); },
+    track(s){ mine=s; bc.postMessage({k:'hb',s}); emit(); },
+    leave(){ clearInterval(hb); if(mine) bc.postMessage({k:'bye',id:mine.id}); bc.close(); }
+  };
+}
+
+/* ---------------- 排行榜 ---------------- */
+async function saveScore(row){
+  if (DEMO){
+    let a=[]; try{ a=JSON.parse(localStorage.getItem('bd_board')||'[]'); }catch(e){}
+    a.push({...row, created_at:new Date().toISOString()});
+    try{ localStorage.setItem('bd_board', JSON.stringify(a)); }catch(e){}
+    return;
+  }
+  const {error} = await sb.from('bond_dash_scores').insert(row);
+  if (error) console.warn(error);
+}
+async function loadBoard(){
+  let rows=[];
+  if (DEMO){ try{ rows=JSON.parse(localStorage.getItem('bd_board')||'[]'); }catch(e){} }
+  else {
+    const {data,error} = await sb.from('bond_dash_scores').select('name,time_ms,shoe,room,created_at').order('time_ms',{ascending:true}).limit(300);
+    if (error) throw error; rows=data||[];
+  }
+  rows.sort((a,b)=>a.time_ms-b.time_ms);
+  const best={}, out=[];
+  for (const r of rows){ if(!best[r.name]){ best[r.name]=1; out.push(r); } }
+  return out.slice(0,30);
+}
+async function renderBoard(el, filter){
+  el.innerHTML='<div class="small">讀取中…</div>';
+  try{
+    let rows = await loadBoard();
+    const tabs = `<div class="tabs">${[['all','全部'],['short','🛡️短債'],['long','🚀長債'],['hy','🔥高收益']].map(([k,t])=>`<button data-f="${k}" class="${(filter||'all')===k?'on':''}">${t}</button>`).join('')}</div>`;
+    if (filter && filter!=='all'){
+      // 各鞋款最佳：重新抓再過濾
+      let all=[];
+      if (DEMO){ try{ all=JSON.parse(localStorage.getItem('bd_board')||'[]'); }catch(e){} }
+      else { const {data}=await sb.from('bond_dash_scores').select('name,time_ms,shoe,room,created_at').eq('shoe',filter).order('time_ms',{ascending:true}).limit(300); all=data||[]; }
+      all=all.filter(r=>r.shoe===filter).sort((a,b)=>a.time_ms-b.time_ms);
+      const seen={}; rows=[]; for(const r of all){ if(!seen[r.name]){seen[r.name]=1; rows.push(r);} } rows=rows.slice(0,30);
+    }
+    const body = rows.length ? `<table class="lb">${rows.map((r,i)=>`<tr class="${r.name===me.name?'me':''}"><td style="width:30px">${i<3?['🥇','🥈','🥉'][i]:i+1}</td><td>${esc(r.name)} <span class="small">${SHOES[r.shoe]?SHOES[r.shoe].icon:''}</span></td><td>${fmt(r.time_ms)}</td></tr>`).join('')}</table>` : '<div class="small">還沒有成績，快來搶第一！</div>';
+    el.innerHTML = tabs + body;
+    el.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>renderBoard(el,b.dataset.f));
+  }catch(e){ el.innerHTML='<div class="err">排行榜讀取失敗：'+esc(e.message||e)+'</div>'; }
+}
+
+/* ---------------- 房間狀態 ---------------- */
+const me = {id:uid(), name:'', shoe:'short', joinedAt:0, status:'lobby'};
+let net=null, room='', players=[], bots=[], isHost=false;
+let race=null;   // 進行中比賽
+
+function sortedPlayers(){ return players.slice().sort((a,b)=>a.joinedAt-b.joinedAt || (a.id<b.id?-1:1)); }
+function hostId(){ const p=sortedPlayers(); return p.length?p[0].id:me.id; }
+
+function enterRoom(code){
+  const nm = $('#name').value.trim();
+  if (!nm){ $('#homeErr').textContent='請先輸入名字'; return; }
+  try{ localStorage.setItem('bd_name', nm); }catch(e){}
+  me.name=nm; me.joinedAt=Date.now(); me.status='lobby';
+  room=code; bots=[]; players=[];
+  $('#lCode').textContent=code;
+  net = createNet(code, onMsg, onPresence);
+  net.track({...me});
+  show('s-lobby'); renderShoes(); renderLobby();
+  // 加入 2 秒後檢查人數
+  setTimeout(()=>{
+    if (!net) return;
+    const sp=sortedPlayers(); const idx=sp.findIndex(p=>p.id===me.id);
+    if (idx>=MAX_PLAYERS){ leaveRoom(); $('#homeErr').textContent='這個房間已滿（'+MAX_PLAYERS+' 人）'; }
+  }, 2000);
+}
+function leaveRoom(){
+  if (net) net.leave(); net=null; race=null; stopLoop();
+  show('s-home');
+}
+function trackMe(){ if(net) net.track({...me}); }
+
+function onPresence(list){
+  const seen={}; players=[];
+  for (const p of list){ if(p && p.id && !seen[p.id]){ seen[p.id]=1; players.push(p); } }
+  if (!players.find(p=>p.id===me.id)) players.push({...me});
+  isHost = hostId()===me.id;
+  // 房間正在比賽、我是後來才進來的 → 等下一場
+  if (!race && players.some(p=>p.status==='racing') && me.status==='lobby'){
+    $('#waitMsg').textContent='⏳ 這個房間正在比賽中，下一場就能一起跑';
+  }
+  if ($('#s-lobby').classList.contains('on')) renderLobby();
+  if ($('#s-result').classList.contains('on')){ $('#rHost').style.display=isHost?'block':'none'; $('#rWait').style.display=isHost?'none':'block'; }
+  if (race) race.presenceIds = new Set(players.map(p=>p.id));
+}
+
+function renderShoes(){
+  $('#shoes').innerHTML = Object.entries(SHOES).map(([k,s])=>
+    `<div class="shoe ${me.shoe===k?'sel':''}" data-k="${k}"><div class="ic">${s.icon}</div><div><b>${s.name}</b><small>${s.desc}</small></div></div>`).join('');
+  $('#shoes').querySelectorAll('.shoe').forEach(el=>el.onclick=()=>{ me.shoe=el.dataset.k; renderShoes(); trackMe(); });
+}
+function renderLobby(){
+  const sp = sortedPlayers().slice(0,MAX_PLAYERS);
+  const all = sp.map(p=>({...p,bot:false})).concat(isHost?bots.map(b=>({...b,bot:true})):[]);
+  // 非房主也看得到房主的電腦跑者（由房主 presence 帶出）
+  const hp = sp.find(p=>p.id===hostId());
+  const extBots = (!isHost && hp && hp.bots) ? hp.bots.map(b=>({...b,bot:true})) : [];
+  const list = all.concat(extBots).slice(0,MAX_PLAYERS);
+  $('#pCount').textContent = `(${list.length}/${MAX_PLAYERS})`;
+  $('#plist').innerHTML = list.map((p,i)=>`<li><span class="dot" style="background:${COLORS[i%8]}"></span>${esc(p.name)} ${SHOES[p.shoe]?SHOES[p.shoe].icon:''}
+     ${p.id===hostId()?'<span class="tag g">房主</span>':''}${p.id===me.id?'<span class="tag">我</span>':''}${p.bot?'<span class="tag bot">電腦</span>':''}
+     ${p.bot&&isHost?`<button class="x" data-b="${p.id}">✕</button>`:''}</li>`).join('');
+  $('#plist').querySelectorAll('[data-b]').forEach(b=>b.onclick=()=>{ bots=bots.filter(x=>x.id!==b.dataset.b); me.bots=bots; trackMe(); renderLobby(); });
+  $('#hostCtl').style.display = isHost?'block':'none';
+  $('#bBot').disabled = list.length>=MAX_PLAYERS;
+  const racing = players.some(p=>p.status==='racing');
+  $('#bStart').disabled = racing;
+  if (!racing) $('#waitMsg').textContent = isHost ? (list.length<2?'只有你一個人也可以先試跑，或加電腦跑者':'') : '等房主按「開跑」…';
+}
+
+/* ---------------- 開跑 ---------------- */
+function hostStart(){
+  const sp = sortedPlayers().slice(0,MAX_PLAYERS);
+  const roster = sp.map(p=>({id:p.id,name:p.name,shoe:p.shoe,bot:false}))
+    .concat(bots.map(b=>({id:b.id,name:b.name,shoe:b.shoe,bot:true}))).slice(0,MAX_PLAYERS);
+  const seed = (Math.random()*1e9)|0;
+  const r = rng(seed);
+  // 抽 3 題（大家同一組題目，公平）
+  const pool = QUESTIONS.map((_,i)=>i); const qIdx=[];
+  while (qIdx.length<STATIONS.length && pool.length){ qIdx.push(pool.splice((r()*pool.length)|0,1)[0]); }
+  // Fed 事件：2 次，類型隨機
+  const t1 = 7+r()*6, t2 = t1+12+r()*8;
+  const events = [{t:t1,dur:5,type:r()<.5?'hike':'cut'},{t:t2,dur:5,type:r()<.5?'hike':'cut'}];
+  const msg = {type:'start', raceId:uid(), seed, qIdx, events, roster, host:me.id};
+  net.send(msg); onMsg(msg);
+}
+
+function onMsg(m){
+  if (!m || !m.type) return;
+  if (m.type==='start'){
+    if (!m.roster.find(p=>p.id===me.id)) return; // 不在名單（後來才加入）
+    startRace(m);
+  } else if (m.type==='pos' && race && m.raceId===race.id){
+    for (const u of m.u){ const rr=race.runners[u.id]; if(rr && !rr.local){ rr.target=u.d; rr.st=u.st; if(u.ms) rr.ms=u.ms; rr.last=performance.now(); } }
+  } else if (m.type==='fin' && race && m.raceId===race.id){
+    const rr=race.runners[m.id]; if(rr && !rr.local){ rr.ms=m.ms; rr.d=rr.target=RACE_M; rr.st='done'; }
+  } else if (m.type==='lobby'){
+    if (race) { race=null; stopLoop(); }
+    me.status='lobby'; trackMe(); show('s-lobby'); renderShoes(); renderLobby();
+  }
+}
+
+function startRace(m){
+  stopLoop();
+  const runners={};
+  m.roster.forEach((p,i)=>{
+    runners[p.id] = {id:p.id, name:p.name, shoe:p.shoe, bot:p.bot, lane:i, color:COLORS[i%8],
+      local: p.id===me.id || (p.bot && m.host===me.id), d:0, target:0, v:0, st:'run', ms:0, last:performance.now(),
+      stIdx:0, until:0, boostUntil:0, phase:Math.random()*6,
+      botRate: 5.2+Math.random()*2.4, botAcc: .6+Math.random()*.3, botNext:0 };
+  });
+  race = {id:m.raceId, host:m.host, seed:m.seed, qIdx:m.qIdx, events:m.events, runners, order:m.roster.map(p=>p.id),
+    t0: performance.now()+3500, started:false, ended:false, presenceIds:new Set(players.map(p=>p.id)), lastSend:0, cramp:rng(m.seed^0x5bd1e995)};
+  me.status='racing'; trackMe();
+  $('#quiz').style.display='none'; $('#banner').style.display='none';
+  show('race'); resize(); startLoop();
+}
+
+/* ---------------- 點擊 ---------------- */
+let lastTap=0;
+function tap(){
+  if (!race || !race.started || race.ended) return;
+  const r=race.runners[me.id]; if(!r || r.st!=='run') return;
+  const now=performance.now(); if (now-lastTap<55) return; lastTap=now;
+  r.v += 1.5;
+  const b=$('#tapbtn'); b.classList.add('hit'); setTimeout(()=>b.classList.remove('hit'),60);
+}
+$('#tapzone').addEventListener('pointerdown', e=>{ e.preventDefault(); tap(); });
+document.addEventListener('keydown', e=>{ if((e.code==='Space'||e.code==='ArrowUp'||e.code==='Enter') && $('#race').classList.contains('on')){ e.preventDefault(); if(!e.repeat) tap(); }});
+
+/* ---------------- 補給站答題 ---------------- */
+let quizTimer=null;
+function openQuiz(r){
+  const qi = race.qIdx[r.stIdx]; const Q = QUESTIONS[qi];
+  const ra = rng(race.seed+r.stIdx*7919+1);
+  const opts = Q.a.map((t,i)=>({t,ok:i===0})).sort(()=>ra()-.5);
+  $('#qNo').textContent = `配息補給站 ${r.stIdx+1} / ${STATIONS.length}`;
+  $('#qText').textContent = Q.q; $('#qexp').textContent='';
+  $('#qOpts').innerHTML = opts.map((o,i)=>`<button class="opt" data-i="${i}">${esc(o.t)}</button>`).join('');
+  $('#quiz').style.display='flex';
+  const t0=performance.now(); let done=false;
+  const finish = (ok, btn)=>{
+    if (done) return; done=true; clearInterval(quizTimer);
+    $('#qOpts').querySelectorAll('.opt').forEach((b,i)=>{ if(opts[i].ok) b.classList.add('ok'); });
+    if (btn && !ok) btn.classList.add('no');
+    $('#qexp').textContent = (ok?'✅ 答對！加速衝刺 3 秒　':'❌ 答錯，跌倒 2 秒　')+Q.e;
+    setTimeout(()=>{
+      $('#quiz').style.display='none';
+      const now=performance.now();
+      if (ok){ r.st='run'; r.boostUntil=now+3000; r.v=Math.max(r.v,5); }
+      else { r.st='fall'; r.until=now+2000; r.v=0; }
+      r.stIdx++;
+    }, ok?900:1600);
+  };
+  $('#qOpts').querySelectorAll('.opt').forEach((b,i)=>b.onclick=()=>finish(opts[i].ok,b));
+  quizTimer=setInterval(()=>{
+    const left = Q_SECONDS - (performance.now()-t0)/1000;
+    $('#qSec').textContent = Math.max(0,left).toFixed(0)+' 秒';
+    $('#qbar i').style.width = Math.max(0,left/Q_SECONDS*100)+'%';
+    if (left<=0) finish(false,null);
+  }, 100);
+}
+
+/* ---------------- 主迴圈 ---------------- */
+const cv=$('#cv'), ctx=cv.getContext('2d'); let W=0,H=0,DPR=1, raf=0, prev=0;
+function resize(){ DPR=Math.min(2,window.devicePixelRatio||1); W=cv.clientWidth; H=cv.clientHeight; cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0); }
+window.addEventListener('resize', ()=>{ if(race) resize(); });
+function startLoop(){ prev=performance.now(); raf=requestAnimationFrame(loop); }
+function stopLoop(){ cancelAnimationFrame(raf); raf=0; clearInterval(quizTimer); }
+
+function windAt(t){ for(const e of race.events){ if(t>=e.t && t<e.t+e.dur) return e; } return null; }
+function shoeMult(r, t){
+  const w=windAt(t); if(!w) return 1;
+  const s=SHOES[r.shoe]||SHOES.short;
+  return w.type==='hike' ? 1-s.sens : 1+s.sens;
+}
+
+function stepRunner(r, dt, now, t){
+  if (r.st==='done') return;
+  const s=SHOES[r.shoe]||SHOES.short;
+  // 電腦跑者自動點擊
+  if (r.bot && r.st==='run'){ if (now>=r.botNext){ r.v+=1.5; r.botNext = now + 1000/(r.botRate*(0.85+Math.random()*.3)); } }
+  if (r.st==='fall' || r.st==='cramp'){ if(now>=r.until){ r.st='run'; } else { r.v=0; return; } }
+  if (r.st==='quiz') { r.v=0; return; }
+  r.v *= Math.exp(-1.4*dt);
+  let cap = s.max * shoeMult(r,t) * (now<r.boostUntil?1.35:1);
+  if (r.v>cap) r.v=cap;
+  let nd = r.d + r.v*dt;
+  // 到補給站
+  if (r.stIdx<STATIONS.length && nd>=STATIONS[r.stIdx]){
+    nd = STATIONS[r.stIdx]; r.v=0;
+    if (s.cramp && race.cramp()<s.cramp && !r.crampDone){ r.st='cramp'; r.until=now+1500; r.crampDone=true; r.d=nd; return; }
+    r.crampDone=false;
+    if (r.bot){
+      r.st='quiz'; const ok=Math.random()<r.botAcc; const wait=2500+Math.random()*4000;
+      setTimeout(()=>{ if(!race) return; if(ok){ r.st='run'; r.boostUntil=performance.now()+3000; r.v=5; } else { r.st='fall'; r.until=performance.now()+2000; } r.stIdx++; }, wait);
+    } else { r.st='quiz'; openQuiz(r); }
+  }
+  if (nd>=RACE_M){ nd=RACE_M; r.st='done'; r.ms=Math.round(now-race.t0);
+    net.send({type:'fin', raceId:race.id, id:r.id, ms:r.ms});
+    if (!r.bot){ saveScore({name:r.name, time_ms:r.ms, shoe:r.shoe, room}); }
+  }
+  r.d=nd; r.target=nd;
+}
+
+function loop(now){
+  if (!race){ return; }
+  raf=requestAnimationFrame(loop);
+  const dt=Math.min(.05,(now-prev)/1000); prev=now;
+  const t=(now-race.t0)/1000;
+  // 倒數
+  const cd=$('#count');
+  if (t<0){ cd.style.display='flex'; cd.textContent=Math.ceil(-t); }
+  else if (t<0.8){ cd.style.display='flex'; cd.textContent='GO!'; race.started=true; }
+  else cd.style.display='none';
+  if (t>=0) race.started=true;
+
+  if (race.started && !race.ended){
+    for (const id of race.order){
+      const r=race.runners[id];
+      if (r.local) stepRunner(r,dt,now,t);
+      else { // 平滑追上網路位置
+        r.d += (r.target-r.d)*Math.min(1,dt*6);
+        if (r.st!=='done' && now-r.last>6000 && !race.presenceIds.has(r.id)) { r.st='dnf'; }
+      }
+    }
+    // 廣播位置（每 250ms）
+    if (now-race.lastSend>250){
+      race.lastSend=now;
+      const u=race.order.map(id=>race.runners[id]).filter(r=>r.local&&r.st!=='donesent').map(r=>({id:r.id,d:+r.d.toFixed(1),st:r.st,ms:r.ms||0}));
+      if (u.length) net.send({type:'pos', raceId:race.id, u});
+    }
+    // Fed 事件提示
+    const w=windAt(t), bn=$('#banner'), mr=race.runners[me.id];
+    if (w){ const m=shoeMult(mr,t); bn.style.display='block';
+      bn.innerHTML = w.type==='hike' ? `🦅 Fed 突然升息！逆風來了<small>你的${SHOES[mr.shoe].icon}跑鞋速度上限 ×${m.toFixed(2)}</small>` : `🕊️ Fed 降息！順風推你一把<small>你的${SHOES[mr.shoe].icon}跑鞋速度上限 ×${m.toFixed(2)}</small>`;
+    } else if (mr.st==='cramp'){ bn.style.display='block'; bn.innerHTML='😖 信用抽筋！<small>高收益債的風險，停 1.5 秒</small>'; }
+    else if (mr.st==='fall'){ bn.style.display='block'; bn.innerHTML='💥 跌倒了！<small>2 秒後爬起來</small>'; }
+    else if (now<mr.boostUntil){ bn.style.display='block'; bn.innerHTML='⚡ 答對加速中！'; }
+    else if (mr.st==='done'){ bn.style.display='block'; bn.innerHTML=`🏁 到期還本！${fmt(mr.ms)}<small>等其他人衝線…</small>`; }
+    else bn.style.display='none';
+    $('#hTime').textContent = (mr.st==='done'? fmt(mr.ms) : Math.max(0,t).toFixed(1)+' 秒');
+    $('#hDist').textContent = `${Math.floor(mr.d)} / ${RACE_M} m`;
+    $('#tapzone').style.visibility = mr.st==='done'?'hidden':'visible';
+    // 結束判斷
+    const all = race.order.map(id=>race.runners[id]);
+    const live = all.filter(r=>r.st!=='dnf');
+    if (live.every(r=>r.st==='done') || t>TIME_LIMIT){ race.ended=true; setTimeout(showResult, 1200); }
+  }
+  draw(t);
+}
+
+/* ---------------- 畫面 ---------------- */
+function draw(t){
+  const mr = race.runners[me.id];
+  const PPM = Math.max(14, H/38);            // 每公尺像素
+  const camD = mr.d;                         // 鏡頭跟著我
+  const baseY = H*0.56;                      // 我的跑者在畫面的高度
+  const y = d => baseY - (d-camD)*PPM;
+  const roadW = Math.min(W*0.84, 440), rx=(W-roadW)/2, laneW=roadW/Math.max(race.order.length,4);
+  const lanes = Math.max(race.order.length,4);
+  // 草地
+  ctx.fillStyle='#4f8f45'; ctx.fillRect(0,0,W,H);
+  // 天空（終點附近）
+  // 路面
+  ctx.fillStyle='#8e8e8a'; ctx.fillRect(rx,0,roadW,H);
+  // 路面紋理線
+  ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=2; ctx.setLineDash([14,14]);
+  const off = ((camD*PPM)%28);
+  for (let i=1;i<lanes;i++){ const x=rx+laneW*i; ctx.lineDashOffset=-off; ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+  ctx.setLineDash([]);
+  // 黃色雙線邊界（像影片的山路）
+  ctx.strokeStyle='#e8c33a'; ctx.lineWidth=3;
+  [[rx+3],[rx+8],[rx+roadW-3],[rx+roadW-8]].forEach(([x])=>{ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); });
+  // 樹（兩側，隨距離捲動）
+  for (let m=Math.floor(camD-40); m<camD+60; m++){
+    if (m<-20 || m%6!==0) continue;
+    const yy=y(m); if(yy<-60||yy>H+60) continue;
+    const s1 = ((m*9301+49297)%233280)/233280;
+    for (const side of [0,1]){
+      const tx = side? rx+roadW+14+s1*Math.max(10,rx-40) : rx-14-s1*Math.max(10,rx-40);
+      if (tx<-30||tx>W+30) continue;
+      ctx.fillStyle='#2f6b2a'; ctx.beginPath(); ctx.arc(tx, yy, 16+s1*10, 0, 7); ctx.fill();
+      ctx.fillStyle='#3d8a36'; ctx.beginPath(); ctx.arc(tx-4, yy-5, 10+s1*6, 0, 7); ctx.fill();
+    }
+  }
+  // 距離標記
+  ctx.font='bold 12px sans-serif'; ctx.textAlign='left';
+  for (let m=0;m<=RACE_M;m+=25){ const yy=y(m); if(yy<-20||yy>H+20) continue;
+    ctx.fillStyle='rgba(255,255,255,.75)'; ctx.fillRect(rx,yy-1,roadW,2);
+    ctx.fillStyle='#fff'; ctx.fillText(m+'m', rx+roadW+4 > W-30 ? rx+4 : rx+roadW+4, yy-4); }
+  // 起跑線
+  drawLine(y(0),'#ffffff','起跑',rx,roadW);
+  // 補給站
+  STATIONS.forEach((s,i)=>{ const yy=y(s); if(yy<-40||yy>H+40) return;
+    ctx.fillStyle='rgba(233,185,73,.9)'; ctx.fillRect(rx,yy-3,roadW,6);
+    ctx.fillStyle='#0b2545'; ctx.fillRect(W/2-78,yy-30,156,22); ctx.fillStyle='#e9b949'; ctx.textAlign='center'; ctx.font='bold 13px sans-serif';
+    ctx.fillText(`💰 配息補給站 ${i+1}`, W/2, yy-14); ctx.textAlign='left'; });
+  // 終點
+  const fy=y(RACE_M);
+  if (fy>-60){ for(let i=0;i<Math.ceil(roadW/12);i++){ for(let j=0;j<2;j++){ ctx.fillStyle=(i+j)%2?'#111':'#fff'; ctx.fillRect(rx+i*12,fy-12+j*12,12,12);} }
+    ctx.fillStyle='#0b2545'; ctx.fillRect(W/2-70,fy-46,140,26); ctx.fillStyle='#e9b949'; ctx.textAlign='center'; ctx.font='bold 15px sans-serif'; ctx.fillText('🏁 到期還本', W/2, fy-27); ctx.textAlign='left'; }
+  // 風
+  const w = t>=0 ? windAt(t) : null;
+  if (w){ ctx.strokeStyle= w.type==='hike'?'rgba(220,38,38,.55)':'rgba(59,130,246,.55)'; ctx.lineWidth=2;
+    for (let i=0;i<26;i++){ const sx=((i*137)%W); const ph=(t*(w.type==='hike'?600:-600)+i*97)%H; const sy=(ph+H)%H;
+      ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(sx,sy+(w.type==='hike'?-24:24)); ctx.stroke(); } }
+  // 跑者
+  const sorted = race.order.map(id=>race.runners[id]);
+  for (const r of sorted){
+    const x = rx + laneW*(r.lane+.5); let yy=y(r.d);
+    if (yy<20){ // 超出畫面上方：顯示箭頭
+      ctx.fillStyle=r.color; ctx.beginPath(); ctx.moveTo(x,6); ctx.lineTo(x-8,20); ctx.lineTo(x+8,20); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.fillText('+'+Math.round(r.d-camD)+'m', x, 34); ctx.textAlign='left'; continue; }
+    if (yy>H-8){ ctx.fillStyle=r.color; ctx.beginPath(); ctx.moveTo(x,H-4); ctx.lineTo(x-8,H-18); ctx.lineTo(x+8,H-18); ctx.fill(); continue; }
+    drawRunner(x, yy, r, t, r.id===me.id, Math.min(laneW*0.9, 34));
+  }
+  // 右側總進度條
+  const bx=W-14, by1=46, by2=H*0.66;
+  ctx.fillStyle='rgba(11,37,69,.6)'; ctx.fillRect(bx-4,by1-6,8,by2-by1+12);
+  STATIONS.forEach(s=>{ const yy=by2-(s/RACE_M)*(by2-by1); ctx.fillStyle='#e9b949'; ctx.fillRect(bx-6,yy-1,12,2); });
+  for (const r of sorted){ const yy=by2-(r.d/RACE_M)*(by2-by1); ctx.fillStyle=r.color; ctx.beginPath(); ctx.arc(bx,yy,r.id===me.id?7:5,0,7); ctx.fill(); if(r.id===me.id){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();} }
+}
+function drawLine(yy,color,label,rx,roadW){ if(yy<-10||yy>H+10) return; ctx.fillStyle=color; ctx.fillRect(rx,yy-3,roadW,6); }
+function drawRunner(x,y,r,t,isMe,size){
+  const s=size/30, moving = r.st==='run' && (r.local? r.v>0.5 : true) && t>0;
+  const sw = moving? Math.sin(t*14 + r.phase)*7*s : 0;
+  ctx.save(); ctx.translate(x,y);
+  if (r.st==='fall'||r.st==='cramp'){ ctx.rotate(1.2); }
+  // 影子
+  ctx.fillStyle='rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(0,14*s,10*s,4*s,0,0,7); ctx.fill();
+  // 腿
+  ctx.strokeStyle='#333'; ctx.lineWidth=4*s; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(-3*s,4*s); ctx.lineTo(-4*s,12*s+sw*.4); ctx.moveTo(3*s,4*s); ctx.lineTo(4*s,12*s-sw*.4); ctx.stroke();
+  // 手
+  ctx.lineWidth=3*s; ctx.beginPath(); ctx.moveTo(-7*s,-6*s); ctx.lineTo(-10*s,1*s-sw*.5); ctx.moveTo(7*s,-6*s); ctx.lineTo(10*s,1*s+sw*.5); ctx.stroke();
+  // 身體
+  ctx.fillStyle=r.color; ctx.beginPath(); ctx.ellipse(0,-3*s,7.5*s,9*s,0,0,7); ctx.fill();
+  // 頭
+  ctx.fillStyle='#3b2a20'; ctx.beginPath(); ctx.arc(0,-15*s,5.5*s,0,7); ctx.fill();
+  if (isMe){ ctx.strokeStyle='#fff'; ctx.lineWidth=2.5; ctx.beginPath(); ctx.ellipse(0,-3*s,10*s,12*s,0,0,7); ctx.stroke(); }
+  ctx.restore();
+  // 名牌
+  ctx.font=`bold ${isMe?12:11}px sans-serif`; ctx.textAlign='center';
+  let label = (isMe?'我':r.name.slice(0,5)) + ' ' + ((SHOES[r.shoe]||{}).icon||'');
+  if (r.st==='quiz') label='💰答題中';
+  if (r.st==='done') label='🏁'+(isMe?'我':r.name.slice(0,4));
+  if (r.st==='dnf') label='📴'+r.name.slice(0,4);
+  const tw=ctx.measureText(label).width+8;
+  ctx.fillStyle = isMe? 'rgba(233,185,73,.95)':'rgba(11,37,69,.8)'; ctx.fillRect(x-tw/2,y-30*size/30-14,tw,15);
+  ctx.fillStyle = isMe? '#0b2545':'#fff'; ctx.fillText(label,x,y-30*size/30-3); ctx.textAlign='left';
+}
+
+/* ---------------- 結果 ---------------- */
+function showResult(){
+  if (!race) return;
+  stopLoop();
+  const rs = race.order.map(id=>race.runners[id]);
+  const fin = rs.filter(r=>r.st==='done'&&r.ms).sort((a,b)=>a.ms-b.ms);
+  const rest = rs.filter(r=>!(r.st==='done'&&r.ms)).sort((a,b)=>b.d-a.d);
+  $('#rList').innerHTML = fin.concat(rest).map((r,i)=>`<li><span class="rk">${r.ms&&r.st==='done'?(i<3?['🥇','🥈','🥉'][i]:i+1):'—'}</span><span class="dot" style="background:${r.color}"></span>${esc(r.name)} ${(SHOES[r.shoe]||{}).icon||''}${r.bot?' <span class="tag bot">電腦</span>':''}${r.id===me.id?' <span class="tag">我</span>':''}<span class="tm">${r.st==='done'&&r.ms?fmt(r.ms):(r.st==='dnf'?'斷線':'未完賽 '+Math.floor(r.d)+'m')}</span></li>`).join('');
+  const ev = race.events.map(e=>e.type==='hike'?'🦅升息':'🕊️降息').join('、');
+  $('#rSub').textContent = `房號 ${room}｜本場 Fed 事件：${ev}`;
+  me.status='lobby'; trackMe();
+  $('#rHost').style.display=isHost?'block':'none'; $('#rWait').style.display=isHost?'none':'block';
+  show('s-result');
+  setTimeout(()=>renderBoard($('#rBoard')), 800);
+  race=null;
+}
+
+/* ---------------- 按鈕 ---------------- */
+function newCode(){ const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s=''; for(let i=0;i<4;i++) s+=c[(Math.random()*c.length)|0]; return s; }
+$('#bCreate').onclick=()=>{ $('#homeErr').textContent=''; enterRoom(newCode()); };
+$('#bJoin').onclick=()=>{ const c=$('#code').value.trim().toUpperCase(); $('#homeErr').textContent=''; if(c.length!==4){ $('#homeErr').textContent='房號是 4 碼'; return; } enterRoom(c); };
+$('#bBoard').onclick=()=>{ show('s-board'); renderBoard($('#bBoardBody')); };
+$('#bBack').onclick=()=>show('s-home');
+$('#bLeave').onclick=leaveRoom; $('#bLeave2').onclick=leaveRoom;
+$('#bStart').onclick=()=>{ if(isHost) hostStart(); };
+$('#bBot').onclick=()=>{
+  const n = sortedPlayers().length + bots.length; if(n>=MAX_PLAYERS) return;
+  const used = new Set(bots.map(b=>b.name)); const nm = BOT_NAMES.find(x=>!used.has(x))||('電腦'+(bots.length+1));
+  const ks = Object.keys(SHOES);
+  bots.push({id:'bot-'+uid(), name:nm, shoe:ks[(Math.random()*ks.length)|0]}); me.bots=bots; trackMe(); renderLobby(); };
+$('#bAgain').onclick=()=>{ const m={type:'lobby'}; net.send(m); onMsg(m); };
+$('#code').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#bJoin').click(); });
+window.addEventListener('beforeunload',()=>{ if(net) net.leave(); });
+</script>
+</body>
+</html>

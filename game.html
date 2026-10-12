@@ -107,7 +107,7 @@ input[type=text]:focus{border-color:var(--gold)}
       <b style="color:var(--ink)">玩法</b><br>
       ① 開跑前選一雙「債券跑鞋」，每雙對升降息的反應不同<br>
       ② 狂點黃色按鈕往前衝（電腦可按空白鍵）<br>
-      ③ 途中遇到 3 個「配息補給站」要答題：答對加速、答錯跌倒<br>
+      ③ 途中遇到 2 個「配息補給站」要答題：答對加速、答錯跌倒<br>
       ④ 比賽中 Fed 會突然升息（逆風）或降息（順風）<br>
       ⑤ 最先衝過「到期還本」終點線的人獲勝！
     </div>
@@ -186,11 +186,11 @@ input[type=text]:focus{border-color:var(--gold)}
    ★ 設定區：要改題目、跑鞋、賽道長度，只要改這裡 ★
    ========================================================= */
 const CONFIG = (window.BOND_DASH_CONFIG || {});   // 由 app.py 注入 Supabase 金鑰
-const RACE_M = 300;                 // 賽道長度（公尺）
-const STATIONS = [75, 150, 225];    // 配息補給站位置（公尺）
+const RACE_M = 200;                 // 賽道長度（公尺）
+const STATIONS = [70, 140];          // 配息補給站位置（公尺）
 const MAX_PLAYERS = 8;              // 每房上限
-const Q_SECONDS = 10;               // 每題作答秒數
-const TIME_LIMIT = 150;             // 每場最長秒數，超過算未完賽
+const Q_SECONDS = 8;                // 每題作答秒數
+const TIME_LIMIT = 90;              // 每場最長秒數，超過算未完賽
 
 const SHOES = {
   short: {icon:'🛡️', name:'短天期債（2 年期公債）', desc:'穩穩跑。升息只慢一點點，降息也只快一點點。', max:9.4, sens:0.12},
@@ -397,8 +397,8 @@ function hostStart(){
   const pool = QUESTIONS.map((_,i)=>i); const qIdx=[];
   while (qIdx.length<STATIONS.length && pool.length){ qIdx.push(pool.splice((r()*pool.length)|0,1)[0]); }
   // Fed 事件：2 次，類型隨機
-  const t1 = 7+r()*6, t2 = t1+12+r()*8;
-  const events = [{t:t1,dur:5,type:r()<.5?'hike':'cut'},{t:t2,dur:5,type:r()<.5?'hike':'cut'}];
+  const t1 = 4+r()*4, t2 = t1+8+r()*4;
+  const events = [{t:t1,dur:4,type:r()<.5?'hike':'cut'},{t:t2,dur:4,type:r()<.5?'hike':'cut'}];
   const msg = {type:'start', raceId:uid(), seed, qIdx, events, roster, host:me.id};
   net.send(msg); onMsg(msg);
 }
@@ -425,7 +425,7 @@ function startRace(m){
     runners[p.id] = {id:p.id, name:p.name, shoe:p.shoe, bot:p.bot, lane:i, color:COLORS[i%8],
       local: p.id===me.id || (p.bot && m.host===me.id), d:0, target:0, v:0, st:'run', ms:0, last:performance.now(),
       stIdx:0, until:0, boostUntil:0, phase:Math.random()*6,
-      botRate: 5.2+Math.random()*2.4, botAcc: .6+Math.random()*.3, botNext:0 };
+      botRate: 6.5+Math.random()*2, botAcc: .6+Math.random()*.3, botNext:0 };
   });
   race = {id:m.raceId, host:m.host, seed:m.seed, qIdx:m.qIdx, events:m.events, runners, order:m.roster.map(p=>p.id),
     t0: performance.now()+3500, started:false, ended:false, presenceIds:new Set(players.map(p=>p.id)), lastSend:0, cramp:rng(m.seed^0x5bd1e995)};
@@ -461,14 +461,14 @@ function openQuiz(r){
     if (done) return; done=true; clearInterval(quizTimer);
     $('#qOpts').querySelectorAll('.opt').forEach((b,i)=>{ if(opts[i].ok) b.classList.add('ok'); });
     if (btn && !ok) btn.classList.add('no');
-    $('#qexp').textContent = (ok?'✅ 答對！加速衝刺 3 秒　':'❌ 答錯，跌倒 2 秒　')+Q.e;
+    $('#qexp').textContent = (ok?'✅ 答對！加速衝刺 3 秒　':'❌ 答錯，跌倒 1.5 秒　')+Q.e;
     setTimeout(()=>{
       $('#quiz').style.display='none';
       const now=performance.now();
       if (ok){ r.st='run'; r.boostUntil=now+3000; r.v=Math.max(r.v,5); }
-      else { r.st='fall'; r.until=now+2000; r.v=0; }
+      else { r.st='fall'; r.until=now+1500; r.v=0; }
       r.stIdx++;
-    }, ok?900:1600);
+    }, ok?700:1200);
   };
   $('#qOpts').querySelectorAll('.opt').forEach((b,i)=>b.onclick=()=>finish(opts[i].ok,b));
   quizTimer=setInterval(()=>{
@@ -510,8 +510,8 @@ function stepRunner(r, dt, now, t){
     if (s.cramp && race.cramp()<s.cramp && !r.crampDone){ r.st='cramp'; r.until=now+1500; r.crampDone=true; r.d=nd; return; }
     r.crampDone=false;
     if (r.bot){
-      r.st='quiz'; const ok=Math.random()<r.botAcc; const wait=2500+Math.random()*4000;
-      setTimeout(()=>{ if(!race) return; if(ok){ r.st='run'; r.boostUntil=performance.now()+3000; r.v=5; } else { r.st='fall'; r.until=performance.now()+2000; } r.stIdx++; }, wait);
+      r.st='quiz'; const ok=Math.random()<r.botAcc; const wait=1500+Math.random()*2500;
+      setTimeout(()=>{ if(!race) return; if(ok){ r.st='run'; r.boostUntil=performance.now()+3000; r.v=5; } else { r.st='fall'; r.until=performance.now()+1500; } r.stIdx++; }, wait);
     } else { r.st='quiz'; openQuiz(r); }
   }
   if (nd>=RACE_M){ nd=RACE_M; r.st='done'; r.ms=Math.round(now-race.t0);
@@ -553,7 +553,7 @@ function loop(now){
     if (w){ const m=shoeMult(mr,t); bn.style.display='block';
       bn.innerHTML = w.type==='hike' ? `🦅 Fed 突然升息！逆風來了<small>你的${SHOES[mr.shoe].icon}跑鞋速度上限 ×${m.toFixed(2)}</small>` : `🕊️ Fed 降息！順風推你一把<small>你的${SHOES[mr.shoe].icon}跑鞋速度上限 ×${m.toFixed(2)}</small>`;
     } else if (mr.st==='cramp'){ bn.style.display='block'; bn.innerHTML='😖 信用抽筋！<small>高收益債的風險，停 1.5 秒</small>'; }
-    else if (mr.st==='fall'){ bn.style.display='block'; bn.innerHTML='💥 跌倒了！<small>2 秒後爬起來</small>'; }
+    else if (mr.st==='fall'){ bn.style.display='block'; bn.innerHTML='💥 跌倒了！<small>1.5 秒後爬起來</small>'; }
     else if (now<mr.boostUntil){ bn.style.display='block'; bn.innerHTML='⚡ 答對加速中！'; }
     else if (mr.st==='done'){ bn.style.display='block'; bn.innerHTML=`🏁 到期還本！${fmt(mr.ms)}<small>等其他人衝線…</small>`; }
     else bn.style.display='none';

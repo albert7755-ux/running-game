@@ -1,4 +1,4 @@
-[README.md](https://github.com/user-attachments/files/33330574/README.md)
+[README.md](https://github.com/user-attachments/files/33330779/README.md)
 # 債衝刺 Bond Dash：即時多人賽跑
 
 最多 8 人同時開跑，狂點按鈕往前衝。途中會遇到 Fed 升降息和配息補給站答題，成績登記到所有房間共用的全站排行榜。
@@ -44,7 +44,7 @@
 ## 常見調整
 在 `game.html` 最上面的「設定區」：
 - **改題目**：修改 `QUESTIONS`，每題的第一個選項要放正確答案（畫面上會自動打亂順序）
-- **改賽道長度**：`RACE_M`（預設 300 公尺）
+- **改賽道長度**：`RACE_M`（預設 200 公尺，一場約 30 秒）
 - **改補給站位置**：`STATIONS`
 - **改房間人數上限**：`MAX_PLAYERS`
 
